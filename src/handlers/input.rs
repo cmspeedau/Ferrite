@@ -2,8 +2,8 @@ use smithay::{
     backend::{
         input::{
             self, AbsolutePositionEvent, Axis, AxisSource, ButtonState, Event, InputBackend,
-            InputEvent, KeyState, KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent,
-            PointerMotionEvent,
+            InputEvent, KeyState, KeyboardKeyEvent, MouseButton, PointerAxisEvent,
+            PointerButtonEvent, PointerMotionEvent,
         },
         libinput::LibinputInputBackend,
     },
@@ -20,6 +20,7 @@ use crate::{
     backends::udev::UdevData,
     config::Action,
     state::{Backend, FerriteState, CONFIG},
+    utils::dock,
     utils::focus::FocusTarget,
     utils::process,
 };
@@ -231,6 +232,17 @@ impl<BackendData: Backend> FerriteState<BackendData> {
                             .handle_pointer_button(button, event.state() == ButtonState::Pressed);
                     }
                     return;
+                }
+                // The dock is compositor-drawn, so its clicks never reach a client.
+                if button_state == ButtonState::Pressed && event.button() == Some(MouseButton::Left)
+                {
+                    let output = self.workspaces.current().outputs().next().cloned();
+                    if let Some(output) = output {
+                        if let Some(index) = dock::slot_at(&output, self.pointer_location) {
+                            dock::launch(index);
+                            return;
+                        }
+                    }
                 }
                 pointer.button(
                     self,

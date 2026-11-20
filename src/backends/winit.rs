@@ -73,7 +73,7 @@ impl Backend for WinitData {
 }
 use crate::{
     state::{Backend, FerriteState, CONFIG},
-    utils::render::{border::BorderShader, init_shaders, CustomRenderElements},
+    utils::render::{border::BorderShader, dock::DockShader, init_shaders, CustomRenderElements},
 };
 
 pub fn init_winit() {
@@ -323,6 +323,13 @@ pub fn winit_dispatch(
                 }
             }),
     );
+    if let Some(dock_geo) = crate::utils::dock::dock_geometry(output) {
+        renderelements.push(CustomRenderElements::Shader(DockShader::element(
+            winitdata.backend.renderer(),
+            dock_geo,
+        )));
+    }
+
     #[cfg(feature = "debug")]
     state.debug.fps.elements();
     winitdata.backend.bind().unwrap();

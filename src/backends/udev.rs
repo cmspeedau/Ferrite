@@ -69,7 +69,10 @@ use crate::{
     state::{Backend, FerriteState, CONFIG},
     utils::{
         process,
-        render::{border::BorderShader, init_shaders, CustomRenderElements},
+        render::{
+            border::BorderShader, dock::DockShader, init_shaders, AsGlowRenderer,
+            CustomRenderElements,
+        },
     },
 };
 
@@ -772,6 +775,12 @@ impl FerriteState<UdevData> {
                     })
                 }),
         );
+        if let Some(dock_geo) = crate::utils::dock::dock_geometry(output) {
+            renderelements.push(CustomRenderElements::Shader(DockShader::element(
+                renderer.glow_renderer_mut(),
+                dock_geo,
+            )));
+        }
         self.debug.fps.elements();
 
         let frame_result: Result<RenderFrameResult<_, _, _>, SwapBuffersError> = surface

@@ -20,10 +20,11 @@ use smithay::{
 
 use crate::state::CONFIG;
 
-use self::{blur::BlurShader, border::BorderShader, corners::CornerShader};
+use self::{blur::BlurShader, border::BorderShader, corners::CornerShader, dock::DockShader};
 pub mod blur;
 pub mod border;
 pub mod corners;
+pub mod dock;
 
 pub type GlMultiRenderer<'a> = MultiRenderer<
     'a,
@@ -453,4 +454,5 @@ pub fn init_shaders(renderer: &mut GlowRenderer) {
     BorderShader::init(renderer);
     CornerShader::init(renderer);
     BlurShader::init(renderer);
+    DockShader::init(renderer);
 }

@@ -22,7 +22,10 @@ pub fn bsp_update_layout(workspace: &mut Workspace) {
 
     //recalculate the size and location of the windows
 
-    let output = layer_map_for_output(workspace.outputs().next().unwrap()).non_exclusive_zone();
+    let output_ref = workspace.outputs().next().unwrap();
+    let mut output = layer_map_for_output(output_ref).non_exclusive_zone();
+    // Keep tiled windows clear of the compositor-drawn dock.
+    output.size.h -= super::dock::reserved_height(output_ref);
     let output_full = workspace
         .outputs()
         .next()

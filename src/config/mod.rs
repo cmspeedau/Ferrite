@@ -48,6 +48,15 @@ pub struct Config {
 
     #[serde(default = "default_animation_duration_ms")]
     pub animation_duration_ms: u32,
+
+    #[serde(default = "default_dock")]
+    pub dock: bool,
+
+    #[serde(default = "default_dock_height")]
+    pub dock_height: i32,
+
+    #[serde(default = "default_dock_apps")]
+    pub dock_apps: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -140,6 +149,9 @@ pub fn generate_config() -> PathBuf {
         blur_radius: default_blur_radius(),
         animations: default_animations(),
         animation_duration_ms: default_animation_duration_ms(),
+        dock: default_dock(),
+        dock_height: default_dock_height(),
+        dock_apps: default_dock_apps(),
     };
     let pretty = PrettyConfig::new().compact_arrays(true).depth_limit(2);
     let ron = ron::ser::to_string_pretty(&default_config, pretty).unwrap();
@@ -217,6 +229,18 @@ fn default_animations() -> bool {
 
 fn default_animation_duration_ms() -> u32 {
     200
+}
+
+fn default_dock() -> bool {
+    true
+}
+
+fn default_dock_height() -> i32 {
+    72
+}
+
+fn default_dock_apps() -> Vec<String> {
+    vec!["kitty".to_string(), "firefox".to_string()]
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
