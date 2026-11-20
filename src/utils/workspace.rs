@@ -44,6 +44,7 @@ pub struct Workspace {
     windows: Vec<Rc<RefCell<MagmaWindow>>>,
     outputs: Vec<Output>,
     pub layout_tree: BinaryTree,
+    pub floating: Vec<Rc<RefCell<MagmaWindow>>>,
 }
 
 impl Workspace {
@@ -52,6 +53,7 @@ impl Workspace {
             windows: Vec::new(),
             outputs: Vec::new(),
             layout_tree: BinaryTree::new(),
+            floating: Vec::new(),
         }
     }
 
@@ -85,6 +87,7 @@ impl Workspace {
                 true
             }
         });
+        self.floating.retain(|w| &w.borrow().window != window);
         self.layout_tree.remove(window);
         bsp_update_layout(self);
         removed
@@ -158,6 +161,25 @@ impl Workspace {
         point: P,
     ) -> Option<(Ref<'_, Window>, Point<i32, Logical>)> {
         let point = point.into();
+        let floating = self
+            .floating
+            .iter()
+            .filter(|e| e.borrow().bbox().to_f64().contains(point))
+            .find_map(|e| {
+                // we need to offset the point to the location where the surface is actually drawn
+                let render_location = e.borrow().render_location();
+                if e.borrow()
+                    .window
+                    .is_in_input_region(&(point - render_location.to_f64()))
+                {
+                    Some((Ref::map(e.borrow(), |hw| &hw.window), render_location))
+                } else {
+                    None
+                }
+            });
+        if let Some(floating) = floating {
+            return Some(floating);
+        }
         self.windows
             .iter()
             .filter(|e| e.borrow().bbox().to_f64().contains(point))
@@ -177,6 +199,52 @@ impl Workspace {
 
     pub fn contains_window(&self, window: &Window) -> bool {
         self.windows.iter().any(|w| &w.borrow().window == window)
+    }
+
+    fn floating_geometry(&self, mwindow: &Rc<RefCell<MagmaWindow>>) -> Rectangle<i32, Logical> {
+        let output = self.outputs.first().unwrap();
+        let output_geo = self.output_geometry(output).unwrap();
+        let rec = mwindow.borrow().rec;
+        Rectangle {
+            loc: Point::from((
+                (output_geo.size.w - rec.size.w) / 2,
+                (output_geo.size.h - rec.size.h) / 2,
+            )),
+            size: rec.size,
+        }
+    }
+
+    /// Toggle the floating state of a window.
+    ///
+    /// Returns `true` if the window is floating after the toggle, `false` if it is tiled again.
+    pub fn toggle_window_floating(&mut self, window: &Window) -> bool {
+        if let Some(mwindow) = self
+            .layout_tree
+            .get_windows()
+            .into_iter()
+            .find(|w| &w.borrow().window == window)
+        {
+            // The window is currently part of the tiling layout, turn it into a floating window.
+            self.layout_tree.remove(window);
+            let geometry = self.floating_geometry(&mwindow);
+            mwindow.borrow_mut().rec = geometry;
+            self.floating.push(mwindow);
+            bsp_update_layout(self);
+            return true;
+        }
+        if let Some(mwindow) = self
+            .floating
+            .iter()
+            .find(|w| &w.borrow().window == window)
+            .cloned()
+        {
+            // The window was floating before, put it back into the tiling layout.
+            self.floating.retain(|w| w != &mwindow);
+            self.layout_tree
+                .insert(mwindow, self.layout_tree.next_split(), 0.5);
+            bsp_update_layout(self);
+        }
+        false
     }
 }
 
