@@ -27,7 +27,7 @@ Join our [Discord](https://discord.gg/VM8DkxaHfa)!
 - [x] Keyboard and Monitor Managament
 - [x] [Screencopy](https://wayland.app/protocols/wlr-screencopy-unstable-v1) Protocols for Screensharing/Screenshots
 - [x] Blur
-- [ ] Animations
+- [x] Animations
 - [X] Borders
 - [x] Can display wayland applications
 - [x] Xwayland Support
