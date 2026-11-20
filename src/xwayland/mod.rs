@@ -102,7 +102,13 @@ impl<BackendData: Backend> XwmHandler for MagmaState<BackendData> {
         window.set_mapped(true).unwrap();
         let rec = window.geometry();
         let window = Window::new_x11_window(window);
-        let magma_window = MagmaWindow { window, rec };
+        let magma_window = MagmaWindow {
+            window,
+            rec,
+            target_loc: rec.loc,
+            anim_from: rec.loc,
+            anim_start: None,
+        };
         self.workspaces
             .current_mut()
             .add_window(Rc::new(RefCell::new(magma_window)));
@@ -115,7 +121,13 @@ impl<BackendData: Backend> XwmHandler for MagmaState<BackendData> {
         let window = Window::new_x11_window(window);
         self.workspaces
             .current_mut()
-            .add_window(Rc::new(RefCell::new(MagmaWindow { window, rec })));
+            .add_window(Rc::new(RefCell::new(MagmaWindow {
+                window,
+                rec,
+                target_loc: rec.loc,
+                anim_from: rec.loc,
+                anim_start: None,
+            })));
         debug!("Override mapped new x11 window");
     }
 

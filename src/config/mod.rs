@@ -42,6 +42,12 @@ pub struct Config {
 
     #[serde(default = "default_blur_radius")]
     pub blur_radius: f32,
+
+    #[serde(default = "default_animations")]
+    pub animations: bool,
+
+    #[serde(default = "default_animation_duration_ms")]
+    pub animation_duration_ms: u32,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -132,6 +138,8 @@ pub fn generate_config() -> PathBuf {
         borders: default_borders(),
         blur: default_blur(),
         blur_radius: default_blur_radius(),
+        animations: default_animations(),
+        animation_duration_ms: default_animation_duration_ms(),
     };
     let pretty = PrettyConfig::new().compact_arrays(true).depth_limit(2);
     let ron = ron::ser::to_string_pretty(&default_config, pretty).unwrap();
@@ -201,6 +209,14 @@ fn default_blur() -> bool {
 
 fn default_blur_radius() -> f32 {
     8.0
+}
+
+fn default_animations() -> bool {
+    true
+}
+
+fn default_animation_duration_ms() -> u32 {
+    200
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

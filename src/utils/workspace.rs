@@ -1,6 +1,7 @@
 use std::{
     cell::{Ref, RefCell},
     rc::Rc,
+    time::{Duration, Instant},
 };
 
 use smithay::{
@@ -26,6 +27,9 @@ use super::{
 pub struct MagmaWindow {
     pub window: Window,
     pub rec: Rectangle<i32, Logical>,
+    pub target_loc: Point<i32, Logical>,
+    pub anim_from: Point<i32, Logical>,
+    pub anim_start: Option<Instant>,
 }
 impl MagmaWindow {
     fn bbox(&self) -> Rectangle<i32, Logical> {
@@ -201,6 +205,33 @@ impl Workspace {
         self.windows.iter().any(|w| &w.borrow().window == window)
     }
 
+    /// Record animation targets after a layout recomputation.
+    ///
+    /// `old_rendered` holds the window locations before the layout change. Windows whose
+    /// target location differs from their previous one get an animated transition.
+    pub fn apply_layout_animation(&mut self, old_rendered: &[(Window, Point<i32, Logical>)]) {
+        if !CONFIG.animations {
+            return;
+        }
+        for mw in &self.windows {
+            let mut m = mw.borrow_mut();
+            let target_loc = m.rec.loc;
+            let old_loc = old_rendered
+                .iter()
+                .find(|(w, _)| *w == m.window)
+                .map(|(_, l)| *l)
+                .unwrap_or(target_loc);
+            m.target_loc = target_loc;
+            if target_loc != old_loc {
+                m.anim_from = old_loc;
+                m.anim_start = Some(Instant::now());
+                m.rec.loc = old_loc;
+            } else {
+                m.anim_start = None;
+            }
+        }
+    }
+
     fn floating_geometry(&self, mwindow: &Rc<RefCell<MagmaWindow>>) -> Rectangle<i32, Logical> {
         let output = self.outputs.first().unwrap();
         let output_geo = self.output_geometry(output).unwrap();
@@ -245,6 +276,34 @@ impl Workspace {
             bsp_update_layout(self);
         }
         false
+    }
+    pub fn update_animations(&mut self) {
+        if !CONFIG.animations {
+            return;
+        }
+        let duration_ms = CONFIG.animation_duration_ms.max(1) as f32;
+        let duration = Duration::from_millis(CONFIG.animation_duration_ms.max(1) as u64);
+        let now = Instant::now();
+        for mw in &self.windows {
+            let mut m = mw.borrow_mut();
+            if let Some(start) = m.anim_start {
+                let elapsed = now.duration_since(start);
+                let progress = (elapsed.as_secs_f32() / duration.as_secs_f32()).min(1.0);
+                let eased = 1.0 - (1.0 - progress).powi(3);
+                let from_x = m.anim_from.x as f32;
+                let from_y = m.anim_from.y as f32;
+                let to_x = m.target_loc.x as f32;
+                let to_y = m.target_loc.y as f32;
+                let x = (from_x + (to_x - from_x) * eased) as i32;
+                let y = (from_y + (to_y - from_y) * eased) as i32;
+                m.rec.loc = Point::from((x, y));
+                if progress >= 1.0 {
+                    m.rec.loc = m.target_loc;
+                    m.anim_start = None;
+                }
+            }
+        }
+        let _ = duration_ms;
     }
 }
 

@@ -670,6 +670,7 @@ impl MagmaState<UdevData> {
             .gpus
             .single_renderer(&device.render_node)
             .unwrap();
+        self.workspaces.current_mut().update_animations();
         let output = self.workspaces.current().outputs().next().unwrap();
 
         let mut renderelements: Vec<CustomRenderElements<MultiRenderer<_, _>>> = vec![];

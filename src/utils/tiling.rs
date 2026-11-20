@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::state::CONFIG;
 use smithay::{
-    desktop::{layer_map_for_output, WindowSurface},
+    desktop::{layer_map_for_output, Window, WindowSurface},
     utils::{Logical, Physical, Point, Rectangle, Size},
 };
 use tracing::debug;
@@ -14,6 +14,12 @@ use super::{
 
 pub fn bsp_update_layout(workspace: &mut Workspace) {
     let gaps = CONFIG.gaps;
+    // Snapshot the currently rendered locations so layout changes can be animated.
+    let old_rendered: Vec<(Window, Point<i32, Logical>)> = workspace
+        .magmawindows()
+        .map(|m| (m.window.clone(), m.rec.loc))
+        .collect();
+
     //recalculate the size and location of the windows
 
     let output = layer_map_for_output(workspace.outputs().next().unwrap()).non_exclusive_zone();
@@ -65,6 +71,7 @@ pub fn bsp_update_layout(workspace: &mut Workspace) {
         }
     }
     debug!("{:#?}", workspace.layout_tree);
+    workspace.apply_layout_animation(&old_rendered);
     for magmawindow in workspace.magmawindows() {
         match magmawindow.window.underlying_surface() {
             WindowSurface::Wayland(w) => {

@@ -46,6 +46,9 @@ impl<BackendData: Backend> XdgShellHandler for MagmaState<BackendData> {
             .add_window(Rc::new(RefCell::new(MagmaWindow {
                 window: window.clone(),
                 rec: window.geometry(),
+                target_loc: window.geometry().loc,
+                anim_from: window.geometry().loc,
+                anim_start: None,
             })));
         self.set_input_focus(FocusTarget::Window(window));
     }

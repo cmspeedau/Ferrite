@@ -240,6 +240,7 @@ pub fn winit_dispatch(
 
     let mut renderelements: Vec<CustomRenderElements<_>> = vec![];
     let workspace = state.workspaces.current_mut();
+    workspace.update_animations();
     let output = workspace.outputs().next().unwrap();
     #[cfg(feature = "debug")]
     if state.debug.active {
