@@ -33,6 +33,7 @@ Join our [Discord](https://discord.gg/VM8DkxaHfa)!
 - [ ] Xwayland Support
 - [x] Working Popups
 - [x] Can be launched from TTY
+- [ ] Dock / panel (see [docs/dock-mockup.html](docs/dock-mockup.html) for design reference, [docs/theme.md](docs/theme.md) for the Satisfactory colour theme)
 
 <!-- hello there -->
 
