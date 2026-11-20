@@ -34,6 +34,7 @@ Join our [Discord](https://discord.gg/VM8DkxaHfa)!
 - [x] Working Popups
 - [x] Can be launched from TTY
 - [ ] Dock / panel (see [docs/dock-mockup.html](docs/dock-mockup.html) for design reference, [docs/theme.md](docs/theme.md) for the Satisfactory colour theme)
+- [ ] FICSIT-style TUI login screen (Satisfactory-inspired greeter shown before session start; design mockup in chat — needs final copy pass, e.g. fix "MASSAGE-2(A-B)b" sector label, confirm font/box-drawing glyph coverage)
 
 <!-- hello there -->
 
