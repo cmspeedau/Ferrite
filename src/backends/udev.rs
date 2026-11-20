@@ -66,7 +66,7 @@ use tracing::{debug, error, info, trace, warn};
 use crate::{
     delegate_screencopy_manager,
     protocols::screencopy::{frame::Screencopy, ScreencopyHandler, ScreencopyManagerState},
-    state::{Backend, MagmaState, CONFIG},
+    state::{Backend, FerriteState, CONFIG},
     utils::{
         process,
         render::{border::BorderShader, init_shaders, CustomRenderElements},
@@ -93,7 +93,7 @@ pub struct UdevData {
     dmabuf_state: Option<(DmabufState, DmabufGlobal)>,
 }
 
-impl DmabufHandler for MagmaState<UdevData> {
+impl DmabufHandler for FerriteState<UdevData> {
     fn dmabuf_state(&mut self) -> &mut DmabufState {
         &mut self.backend_data.dmabuf_state.as_mut().unwrap().0
     }
@@ -111,13 +111,13 @@ impl DmabufHandler for MagmaState<UdevData> {
             .and_then(|mut renderer| renderer.import_dmabuf(&dmabuf, None))
             .is_ok()
         {
-            let _ = notifier.successful::<MagmaState<UdevData>>();
+            let _ = notifier.successful::<FerriteState<UdevData>>();
         } else {
             notifier.failed();
         }
     }
 }
-delegate_dmabuf!(MagmaState<UdevData>);
+delegate_dmabuf!(FerriteState<UdevData>);
 
 impl Backend for UdevData {
     fn seat_name(&self) -> String {
@@ -143,8 +143,8 @@ pub struct Surface {
 }
 
 pub fn init_udev() {
-    let mut event_loop: EventLoop<MagmaState<UdevData>> = EventLoop::try_new().unwrap();
-    let display: Display<MagmaState<UdevData>> = Display::new().unwrap();
+    let mut event_loop: EventLoop<FerriteState<UdevData>> = EventLoop::try_new().unwrap();
+    let display: Display<FerriteState<UdevData>> = Display::new().unwrap();
     let mut display_handle: DisplayHandle = display.handle().clone();
     /*
      * Initialize session
@@ -173,8 +173,8 @@ pub fn init_udev() {
         dmabuf_state: None,
     };
 
-    let mut state = MagmaState::new(event_loop.handle(), event_loop.get_signal(), display, data);
-    ScreencopyManagerState::new::<MagmaState<UdevData>>(&display_handle);
+    let mut state = FerriteState::new(event_loop.handle(), event_loop.get_signal(), display, data);
+    ScreencopyManagerState::new::<FerriteState<UdevData>>(&display_handle);
     /*
      * Add input source
      */
@@ -299,7 +299,7 @@ pub fn init_udev() {
         .build()
         .unwrap();
     let mut dmabuf_state = DmabufState::new();
-    let global = dmabuf_state.create_global_with_default_feedback::<MagmaState<UdevData>>(
+    let global = dmabuf_state.create_global_with_default_feedback::<FerriteState<UdevData>>(
         &display_handle,
         &default_feedback,
     );
@@ -363,7 +363,7 @@ pub fn primary_gpu(seat: &str) -> (DrmNode, PathBuf) {
 }
 
 // Udev
-impl MagmaState<UdevData> {
+impl FerriteState<UdevData> {
     pub fn on_udev_event(&mut self, event: UdevEvent, display: &mut DisplayHandle) {
         match event {
             UdevEvent::Added { device_id, path } => {
@@ -455,7 +455,7 @@ impl MagmaState<UdevData> {
 
             for surface in device.surfaces.values() {
                 self.dh
-                    .disable_global::<MagmaState<UdevData>>(surface.global.clone());
+                    .disable_global::<FerriteState<UdevData>>(surface.global.clone());
                 for workspace in self.workspaces.iter() {
                     workspace.remove_output(&surface.output)
                 }
@@ -465,7 +465,7 @@ impl MagmaState<UdevData> {
 }
 
 // Drm
-impl MagmaState<UdevData> {
+impl FerriteState<UdevData> {
     pub fn on_drm_event(
         &mut self,
         node: DrmNode,
@@ -558,7 +558,7 @@ impl MagmaState<UdevData> {
                         model,
                     },
                 );
-                let global = output.create_global::<MagmaState<UdevData>>(display);
+                let global = output.create_global::<FerriteState<UdevData>>(display);
                 let output_mode = WlMode::from(drm_mode);
                 output.set_preferred(output_mode);
                 output.change_current_state(
@@ -654,7 +654,7 @@ impl MagmaState<UdevData> {
     }
 }
 
-impl MagmaState<UdevData> {
+impl FerriteState<UdevData> {
     pub fn render(
         &mut self,
         node: DrmNode,
@@ -949,7 +949,7 @@ impl MagmaState<UdevData> {
     }
 }
 
-impl ScreencopyHandler for MagmaState<UdevData> {
+impl ScreencopyHandler for FerriteState<UdevData> {
     fn output(&mut self, output: &WlOutput) -> &Output {
         self.workspaces.outputs().find(|o| o.owns(output)).unwrap()
     }
@@ -966,4 +966,4 @@ impl ScreencopyHandler for MagmaState<UdevData> {
     }
 }
 
-delegate_screencopy_manager!(MagmaState<UdevData>);
+delegate_screencopy_manager!(FerriteState<UdevData>);

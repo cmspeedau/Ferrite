@@ -13,7 +13,7 @@ pub use smithay::{
 };
 use tracing::debug;
 
-use crate::state::{Backend, MagmaState};
+use crate::state::{Backend, FerriteState};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum FocusTarget {
@@ -38,11 +38,11 @@ impl From<FocusTarget> for WlSurface {
     }
 }
 
-impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarget {
+impl<BackendData: Backend> PointerTarget<FerriteState<BackendData>> for FocusTarget {
     fn enter(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         event: &MotionEvent,
     ) {
         match self {
@@ -62,8 +62,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
     }
     fn motion(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         event: &MotionEvent,
     ) {
         match self {
@@ -85,8 +85,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
     }
     fn relative_motion(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         event: &RelativeMotionEvent,
     ) {
         match self {
@@ -110,8 +110,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
     }
     fn button(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         event: &ButtonEvent,
     ) {
         match self {
@@ -133,8 +133,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
     }
     fn axis(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         frame: AxisFrame,
     ) {
         match self {
@@ -152,8 +152,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
     }
     fn leave(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         serial: Serial,
         time: u32,
     ) {
@@ -175,14 +175,18 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
         }
     }
 
-    fn frame(&self, _seat: &Seat<MagmaState<BackendData>>, _data: &mut MagmaState<BackendData>) {
+    fn frame(
+        &self,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
+    ) {
         todo!()
     }
 
     fn gesture_swipe_begin(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GestureSwipeBeginEvent,
     ) {
         todo!()
@@ -190,8 +194,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
 
     fn gesture_swipe_update(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GestureSwipeUpdateEvent,
     ) {
         todo!()
@@ -199,8 +203,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
 
     fn gesture_swipe_end(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GestureSwipeEndEvent,
     ) {
         todo!()
@@ -208,8 +212,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
 
     fn gesture_pinch_begin(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GesturePinchBeginEvent,
     ) {
         todo!()
@@ -217,8 +221,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
 
     fn gesture_pinch_update(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GesturePinchUpdateEvent,
     ) {
         todo!()
@@ -226,8 +230,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
 
     fn gesture_pinch_end(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GesturePinchEndEvent,
     ) {
         todo!()
@@ -235,8 +239,8 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
 
     fn gesture_hold_begin(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GestureHoldBeginEvent,
     ) {
         todo!()
@@ -244,19 +248,19 @@ impl<BackendData: Backend> PointerTarget<MagmaState<BackendData>> for FocusTarge
 
     fn gesture_hold_end(
         &self,
-        _seat: &Seat<MagmaState<BackendData>>,
-        _data: &mut MagmaState<BackendData>,
+        _seat: &Seat<FerriteState<BackendData>>,
+        _data: &mut FerriteState<BackendData>,
         _event: &smithay::input::pointer::GestureHoldEndEvent,
     ) {
         todo!()
     }
 }
 
-impl<BackendData: Backend> KeyboardTarget<MagmaState<BackendData>> for FocusTarget {
+impl<BackendData: Backend> KeyboardTarget<FerriteState<BackendData>> for FocusTarget {
     fn enter(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         keys: Vec<KeysymHandle<'_>>,
         serial: Serial,
     ) {
@@ -281,8 +285,8 @@ impl<BackendData: Backend> KeyboardTarget<MagmaState<BackendData>> for FocusTarg
     }
     fn leave(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         serial: Serial,
     ) {
         match self {
@@ -304,8 +308,8 @@ impl<BackendData: Backend> KeyboardTarget<MagmaState<BackendData>> for FocusTarg
     }
     fn key(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         key: KeysymHandle<'_>,
         state: KeyState,
         serial: Serial,
@@ -332,8 +336,8 @@ impl<BackendData: Backend> KeyboardTarget<MagmaState<BackendData>> for FocusTarg
     }
     fn modifiers(
         &self,
-        seat: &Seat<MagmaState<BackendData>>,
-        data: &mut MagmaState<BackendData>,
+        seat: &Seat<FerriteState<BackendData>>,
+        data: &mut FerriteState<BackendData>,
         modifiers: ModifiersState,
         serial: Serial,
     ) {

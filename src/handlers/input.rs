@@ -19,12 +19,12 @@ use tracing::info;
 use crate::{
     backends::udev::UdevData,
     config::Action,
-    state::{Backend, MagmaState, CONFIG},
+    state::{Backend, FerriteState, CONFIG},
     utils::focus::FocusTarget,
     utils::process,
 };
 
-impl MagmaState<UdevData> {
+impl FerriteState<UdevData> {
     pub fn process_input_event_udev(
         &mut self,
         event: InputEvent<LibinputInputBackend>,
@@ -98,7 +98,7 @@ impl MagmaState<UdevData> {
     }
 }
 
-impl<BackendData: Backend> MagmaState<BackendData> {
+impl<BackendData: Backend> FerriteState<BackendData> {
     pub fn process_input_event<I: InputBackend>(&mut self, event: InputEvent<I>) {
         match event {
             #[cfg(feature = "debug")]

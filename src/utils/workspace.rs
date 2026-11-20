@@ -24,14 +24,14 @@ use super::{
 };
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct MagmaWindow {
+pub struct FerriteWindow {
     pub window: Window,
     pub rec: Rectangle<i32, Logical>,
     pub target_loc: Point<i32, Logical>,
     pub anim_from: Point<i32, Logical>,
     pub anim_start: Option<Instant>,
 }
-impl MagmaWindow {
+impl FerriteWindow {
     fn bbox(&self) -> Rectangle<i32, Logical> {
         let mut bbox = self.window.bbox();
         bbox.loc += self.rec.loc - self.window.geometry().loc;
@@ -45,10 +45,10 @@ impl MagmaWindow {
 
 #[derive(Debug, Clone)]
 pub struct Workspace {
-    windows: Vec<Rc<RefCell<MagmaWindow>>>,
+    windows: Vec<Rc<RefCell<FerriteWindow>>>,
     outputs: Vec<Output>,
     pub layout_tree: BinaryTree,
-    pub floating: Vec<Rc<RefCell<MagmaWindow>>>,
+    pub floating: Vec<Rc<RefCell<FerriteWindow>>>,
 }
 
 impl Workspace {
@@ -67,11 +67,11 @@ impl Workspace {
             .map(|w| Ref::map(w.borrow(), |hw| &hw.window))
     }
 
-    pub fn magmawindows(&self) -> impl Iterator<Item = Ref<'_, MagmaWindow>> {
+    pub fn ferritewindows(&self) -> impl Iterator<Item = Ref<'_, FerriteWindow>> {
         self.windows.iter().map(|w| Ref::map(w.borrow(), |hw| hw))
     }
 
-    pub fn add_window(&mut self, window: Rc<RefCell<MagmaWindow>>) {
+    pub fn add_window(&mut self, window: Rc<RefCell<FerriteWindow>>) {
         // add window to vec and remap if exists
         self.windows
             .retain(|w| w.borrow().window != window.borrow().window);
@@ -81,7 +81,7 @@ impl Workspace {
         bsp_update_layout(self);
     }
 
-    pub fn remove_window(&mut self, window: &Window) -> Option<Rc<RefCell<MagmaWindow>>> {
+    pub fn remove_window(&mut self, window: &Window) -> Option<Rc<RefCell<FerriteWindow>>> {
         let mut removed = None;
         self.windows.retain(|w| {
             if &w.borrow().window == window {
@@ -232,7 +232,7 @@ impl Workspace {
         }
     }
 
-    fn floating_geometry(&self, mwindow: &Rc<RefCell<MagmaWindow>>) -> Rectangle<i32, Logical> {
+    fn floating_geometry(&self, mwindow: &Rc<RefCell<FerriteWindow>>) -> Rectangle<i32, Logical> {
         let output = self.outputs.first().unwrap();
         let output_geo = self.output_geometry(output).unwrap();
         let rec = mwindow.borrow().rec;

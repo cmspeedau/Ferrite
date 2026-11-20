@@ -12,8 +12,8 @@ use smithay::{
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    state::{Backend, MagmaState},
-    utils::workspace::MagmaWindow,
+    state::{Backend, FerriteState},
+    utils::workspace::FerriteWindow,
 };
 
 #[derive(Debug)]
@@ -39,7 +39,7 @@ impl XWaylandState {
     }
 
     /// Start the xwayland server
-    pub fn start(&mut self, loop_handle: LoopHandle<MagmaState<impl Backend>>) {
+    pub fn start(&mut self, loop_handle: LoopHandle<FerriteState<impl Backend>>) {
         let env: HashMap<String, String> = HashMap::new();
 
         self.xdisplay = Some(
@@ -52,7 +52,7 @@ impl XWaylandState {
     pub fn on_event<BackendData: Backend>(
         &mut self,
         event: XWaylandEvent,
-        loop_handle: LoopHandle<'static, MagmaState<BackendData>>,
+        loop_handle: LoopHandle<'static, FerriteState<BackendData>>,
         display_handle: &mut DisplayHandle,
     ) {
         match event {
@@ -87,7 +87,7 @@ impl XWaylandState {
     }
 }
 
-impl<BackendData: Backend> XwmHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> XwmHandler for FerriteState<BackendData> {
     fn xwm_state(&mut self, _xwm: XwmId) -> &mut X11Wm {
         self.xwayland_state.xwm.as_mut().unwrap()
     }
@@ -102,7 +102,7 @@ impl<BackendData: Backend> XwmHandler for MagmaState<BackendData> {
         window.set_mapped(true).unwrap();
         let rec = window.geometry();
         let window = Window::new_x11_window(window);
-        let magma_window = MagmaWindow {
+        let ferrite_window = FerriteWindow {
             window,
             rec,
             target_loc: rec.loc,
@@ -111,7 +111,7 @@ impl<BackendData: Backend> XwmHandler for MagmaState<BackendData> {
         };
         self.workspaces
             .current_mut()
-            .add_window(Rc::new(RefCell::new(magma_window)));
+            .add_window(Rc::new(RefCell::new(ferrite_window)));
         // self.set_input_focus(FocusTarget::Window(window));
         debug!("Mapped new x11 window");
     }
@@ -121,7 +121,7 @@ impl<BackendData: Backend> XwmHandler for MagmaState<BackendData> {
         let window = Window::new_x11_window(window);
         self.workspaces
             .current_mut()
-            .add_window(Rc::new(RefCell::new(MagmaWindow {
+            .add_window(Rc::new(RefCell::new(FerriteWindow {
                 window,
                 rec,
                 target_loc: rec.loc,

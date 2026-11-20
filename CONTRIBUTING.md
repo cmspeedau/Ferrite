@@ -1,21 +1,21 @@
 # Contribution Guidelines
 
-Thank you for your interest in contributing to MagmaWM! We welcome contributions from the community to help improve and enhance the project. Please take a moment to review the guidelines below before making any contributions.
+Thank you for your interest in contributing to Ferrite! We welcome contributions from the community to help improve and enhance the project. Please take a moment to review the guidelines below before making any contributions.
 
 ## Getting Started
 
-To contribute to MagmaWM, you will need to have a basic understanding of the Rust programming language, Smithay Library and the Wayland protocol. Familiarity with Git and GitHub is also recommended.
+To contribute to Ferrite, you will need to have a basic understanding of the Rust programming language, Smithay Library and the Wayland protocol. Familiarity with Git and GitHub is also recommended.
 
 Here are the steps to get started:
 
-1. Fork the MagmaWM repository on GitHub.
+1. Fork the Ferrite repository on GitHub.
 2. Clone your forked repository to your local machine.
 3. Set up the project dependencies as mentioned in the "Build" section of the README.
 4. Make your desired changes or additions to the codebase.
 5. Test your changes thoroughly to ensure they work as intended.
 6. Commit your changes with clear and descriptive commit messages.
 7. Push your changes to your forked repository.
-8. Open a pull request on the main MagmaWM repository.
+8. Open a pull request on the main Ferrite repository.
 
 ## Contribution Guidelines
 
@@ -31,7 +31,7 @@ Use meaningful and descriptive names for your branches that reflect the purpose 
 
 Follow the existing code style and conventions used in the project. Consistent code style makes it easier for others to understand and maintain the codebase.
 
-MagmaWM is primarily written in Rust, so adhere to the official Rust style guidelines outlined in the Rust Style Guide. You can use the `rustfmt` tool to automatically format your code according to these guidelines.
+Ferrite is primarily written in Rust, so adhere to the official Rust style guidelines outlined in the Rust Style Guide. You can use the `rustfmt` tool to automatically format your code according to these guidelines.
 
 ### 3. Testing
 
@@ -51,7 +51,7 @@ Use present tense and imperative mood in your commit messages (e.g., "Add featur
 
 ### 6. Pull Requests
 
-Open a pull request (PR) on the main MagmaWM repository when you are ready to submit your changes for review.
+Open a pull request (PR) on the main Ferrite repository when you are ready to submit your changes for review.
 
 Include a detailed description of the changes made, along with any relevant information that could help reviewers understand your work.
 
@@ -59,10 +59,10 @@ Be responsive to feedback and actively participate in the discussion during the 
 
 ### 7. Licensing
 
-By contributing to MagmaWM, you agree to license your contributions under the project's MIT license. Make sure you have the necessary rights to the code you are contributing.
+By contributing to Ferrite, you agree to license your contributions under the project's MIT license. Make sure you have the necessary rights to the code you are contributing.
 
 ## Conclusion
 
-We appreciate your interest in contributing to MagmaWM! Your contributions help make the project better and more versatile. If you have any questions or need assistance, feel free to reach out on our Discord community.
+We appreciate your interest in contributing to Ferrite! Your contributions help make the project better and more versatile. If you have any questions or need assistance, feel free to reach out on our Discord community.
 
 Happy coding!

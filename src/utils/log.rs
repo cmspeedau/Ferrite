@@ -11,8 +11,8 @@ const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::INFO;
 
 /// Initialize logging for the application.
 ///
-/// * Creates log dir `~/.local/share/MagmaWM` if it does not exist
-/// * Creates a timestamped log file: `magma_YYYY-MM-DD_HH:MM:SS.log`.
+/// * Creates log dir `~/.local/share/Ferrite` if it does not exist
+/// * Creates a timestamped log file: `ferrite_YYYY-MM-DD_HH:MM:SS.log`.
 /// * Symlinks `latest.log` to the new timestamped log file.
 /// * Initializes logging to the timestamped log file (no color).
 /// * Initializes logging to stderr (with color).
@@ -30,8 +30,8 @@ const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::INFO;
 /// flag.
 pub fn init_logs<S: AsRef<str>>(log_level: Option<S>) {
     let home_dir = std::env::var("HOME").expect("$HOME is not set");
-    let log_dir = PathBuf::from(home_dir).join(".local/share/MagmaWM/");
-    let log_file_name = format!("magma_{}.log", Local::now().format("%Y-%m-%d_%H:%M:%S"));
+    let log_dir = PathBuf::from(home_dir).join(".local/share/Ferrite/");
+    let log_file_name = format!("ferrite_{}.log", Local::now().format("%Y-%m-%d_%H:%M:%S"));
     let log_file_path = log_dir.join(log_file_name);
     let log_link_path = log_dir.join("latest.log");
 

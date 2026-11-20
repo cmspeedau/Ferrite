@@ -2,12 +2,12 @@ use smithay::desktop::Window;
 use std::fmt::Debug;
 use std::{cell::RefCell, rc::Rc};
 
-use super::workspace::MagmaWindow;
+use super::workspace::FerriteWindow;
 
 #[derive(Clone)]
 pub enum BinaryTree {
     Empty,
-    Window(Rc<RefCell<MagmaWindow>>),
+    Window(Rc<RefCell<FerriteWindow>>),
     Split {
         split: HorizontalOrVertical,
         ratio: f32,
@@ -50,7 +50,7 @@ impl BinaryTree {
 
     pub fn insert(
         &mut self,
-        window: Rc<RefCell<MagmaWindow>>,
+        window: Rc<RefCell<FerriteWindow>>,
         splitnew: HorizontalOrVertical,
         rationew: f32,
     ) {
@@ -137,13 +137,13 @@ impl BinaryTree {
         }
     }
 
-    pub fn get_windows(&self) -> Vec<Rc<RefCell<MagmaWindow>>> {
+    pub fn get_windows(&self) -> Vec<Rc<RefCell<FerriteWindow>>> {
         let mut result = Vec::new();
         self.get_windows_recursive(&mut result);
         result
     }
 
-    fn get_windows_recursive(&self, result: &mut Vec<Rc<RefCell<MagmaWindow>>>) {
+    fn get_windows_recursive(&self, result: &mut Vec<Rc<RefCell<FerriteWindow>>>) {
         match self {
             BinaryTree::Empty => {}
             BinaryTree::Window(window) => {

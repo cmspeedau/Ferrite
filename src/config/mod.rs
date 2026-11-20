@@ -67,7 +67,7 @@ pub fn generate_config() -> PathBuf {
     warn!("No config file found, generating one");
     let xdg = xdg::BaseDirectories::new().expect("Couldnt get xdg basedirs");
     let file_path = xdg
-        .place_config_file("magmawm/config.ron")
+        .place_config_file("ferrite/config.ron")
         .expect("Failed to get file path");
     let mut file = match File::create(file_path.clone()) {
         Ok(file) => file,
@@ -152,8 +152,8 @@ pub fn load_config() -> Config {
     let xdg = xdg::BaseDirectories::new().ok();
     let locations = if let Some(base) = xdg {
         vec![
-            base.get_config_file("magmawm.ron"),
-            base.get_config_file("magmawm/config.ron"),
+            base.get_config_file("ferrite.ron"),
+            base.get_config_file("ferrite/config.ron"),
         ]
     } else {
         vec![]

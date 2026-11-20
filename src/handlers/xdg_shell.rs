@@ -27,14 +27,14 @@ use std::{cell::RefCell, rc::Rc, sync::Mutex};
 use tracing::warn;
 
 use crate::{
-    state::{Backend, MagmaState},
+    state::{Backend, FerriteState},
     utils::{
         focus::FocusTarget,
-        workspace::{MagmaWindow, Workspaces},
+        workspace::{FerriteWindow, Workspaces},
     },
 };
 
-impl<BackendData: Backend> XdgShellHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> XdgShellHandler for FerriteState<BackendData> {
     fn xdg_shell_state(&mut self) -> &mut XdgShellState {
         &mut self.xdg_shell_state
     }
@@ -43,7 +43,7 @@ impl<BackendData: Backend> XdgShellHandler for MagmaState<BackendData> {
         let window = Window::new_wayland_window(surface);
         self.workspaces
             .current_mut()
-            .add_window(Rc::new(RefCell::new(MagmaWindow {
+            .add_window(Rc::new(RefCell::new(FerriteWindow {
                 window: window.clone(),
                 rec: window.geometry(),
                 target_loc: window.geometry().loc,
@@ -92,7 +92,7 @@ impl<BackendData: Backend> XdgShellHandler for MagmaState<BackendData> {
     }
 }
 
-delegate_xdg_shell!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_xdg_shell!(@<BackendData: Backend + 'static> FerriteState<BackendData>);
 
 // Should be called on `WlSurface::commit`
 pub fn handle_commit(workspaces: &Workspaces, surface: &WlSurface, popup_manager: &PopupManager) {
@@ -187,7 +187,7 @@ pub fn handle_commit(workspaces: &Workspaces, surface: &WlSurface, popup_manager
 }
 
 // Disable decorations
-impl<BackendData: Backend> XdgDecorationHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> XdgDecorationHandler for FerriteState<BackendData> {
     fn new_decoration(&mut self, toplevel: ToplevelSurface) {
         toplevel.with_pending_state(|state| {
             // Advertise server side decoration
@@ -206,4 +206,4 @@ impl<BackendData: Backend> XdgDecorationHandler for MagmaState<BackendData> {
     fn unset_mode(&mut self, _toplevel: ToplevelSurface) {}
 }
 
-delegate_xdg_decoration!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_xdg_decoration!(@<BackendData: Backend + 'static> FerriteState<BackendData>);

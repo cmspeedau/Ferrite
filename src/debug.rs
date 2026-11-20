@@ -22,7 +22,7 @@ use smithay::{
 };
 
 use crate::{
-    state::{Backend, MagmaState},
+    state::{Backend, FerriteState},
     utils::focus::FocusTarget,
 };
 
@@ -32,19 +32,19 @@ pub const SCREENCOPY_COLOR: Color32 = Color32::from_rgb(255, 255, 153);
 pub const DISPLAY_COLOR: Color32 = Color32::from_rgb(152, 251, 152);
 const VENDORS: [(&str, &str); 3] = [("0x10de", "nvidia"), ("0x1002", "amd"), ("0x8086", "intel")];
 
-pub struct MagmaDebug {
+pub struct FerriteDebug {
     pub egui: smithay_egui::EguiState,
     pub active: bool,
     pub fps: Fps,
 }
 
-impl MagmaDebug {
+impl FerriteDebug {
     #[allow(clippy::too_many_arguments)]
     pub fn global_ui<BackendData: Backend>(
         &mut self,
         gpu: Option<&DrmNode>,
         output: &Output,
-        seat: &Seat<MagmaState<BackendData>>,
+        seat: &Seat<FerriteState<BackendData>>,
         renderer: &mut GlowRenderer,
         area: Rectangle<i32, Logical>,
         scale: f64,
@@ -95,7 +95,7 @@ impl MagmaDebug {
                     .anchor(egui::Align2::LEFT_TOP, (10.0, 10.0))
                     .show(ctx, |ui| {
                         ui.label(format!(
-                            "MagmaWM version {}",
+                            "Ferrite version {}",
                             std::env!("CARGO_PKG_VERSION")
                         ));
                         if let Some(hash) = std::process::Command::new("git")

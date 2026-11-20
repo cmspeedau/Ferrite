@@ -9,14 +9,14 @@ use tracing::debug;
 
 use super::{
     binarytree::{BinaryTree, HorizontalOrVertical},
-    workspace::{MagmaWindow, Workspace},
+    workspace::{FerriteWindow, Workspace},
 };
 
 pub fn bsp_update_layout(workspace: &mut Workspace) {
     let gaps = CONFIG.gaps;
     // Snapshot the currently rendered locations so layout changes can be animated.
     let old_rendered: Vec<(Window, Point<i32, Logical>)> = workspace
-        .magmawindows()
+        .ferritewindows()
         .map(|m| (m.window.clone(), m.rec.loc))
         .collect();
 
@@ -72,22 +72,22 @@ pub fn bsp_update_layout(workspace: &mut Workspace) {
     }
     debug!("{:#?}", workspace.layout_tree);
     workspace.apply_layout_animation(&old_rendered);
-    for magmawindow in workspace.magmawindows() {
-        match magmawindow.window.underlying_surface() {
+    for ferritewindow in workspace.ferritewindows() {
+        match ferritewindow.window.underlying_surface() {
             WindowSurface::Wayland(w) => {
                 w.with_pending_state(|state| {
-                    state.size = Some(magmawindow.rec.size);
+                    state.size = Some(ferritewindow.rec.size);
                 });
                 w.send_configure();
             }
-            WindowSurface::X11(x) => x.configure(Some(magmawindow.rec)).unwrap(),
+            WindowSurface::X11(x) => x.configure(Some(ferritewindow.rec)).unwrap(),
         }
     }
 }
 
 pub fn generate_layout(
     tree: &mut BinaryTree,
-    lastwin: &Rc<RefCell<MagmaWindow>>,
+    lastwin: &Rc<RefCell<FerriteWindow>>,
     lastgeo: Rectangle<i32, Logical>,
     split: HorizontalOrVertical,
     ratio: f32,

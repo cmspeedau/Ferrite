@@ -38,14 +38,14 @@ use smithay::{
 use smithay::xwayland::XWaylandClientData;
 
 use crate::{
-    state::{Backend, ClientState, MagmaState},
+    state::{Backend, ClientState, FerriteState},
     utils::{focus::FocusTarget, tiling::bsp_update_layout},
 };
 
 pub mod input;
 pub mod xdg_shell;
 
-impl<BackendData: Backend> CompositorHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> CompositorHandler for FerriteState<BackendData> {
     fn compositor_state(&mut self) -> &mut CompositorState {
         &mut self.compositor_state
     }
@@ -83,9 +83,9 @@ impl<BackendData: Backend> CompositorHandler for MagmaState<BackendData> {
     }
 }
 
-delegate_compositor!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_compositor!(@<BackendData: Backend + 'static> FerriteState<BackendData>);
 
-impl<BackendData: Backend> BufferHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> BufferHandler for FerriteState<BackendData> {
     fn buffer_destroyed(
         &mut self,
         _buffer: &smithay::reexports::wayland_server::protocol::wl_buffer::WlBuffer,
@@ -93,20 +93,20 @@ impl<BackendData: Backend> BufferHandler for MagmaState<BackendData> {
     }
 }
 
-impl<BackendData: Backend> ShmHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> ShmHandler for FerriteState<BackendData> {
     fn shm_state(&self) -> &ShmState {
         &self.shm_state
     }
 }
 
-delegate_shm!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_shm!(@<BackendData: Backend + 'static> FerriteState<BackendData>);
 
-impl<BackendData: Backend> SeatHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> SeatHandler for FerriteState<BackendData> {
     type KeyboardFocus = FocusTarget;
     type PointerFocus = FocusTarget;
     type TouchFocus = WlSurface;
 
-    fn seat_state(&mut self) -> &mut SeatState<MagmaState<BackendData>> {
+    fn seat_state(&mut self) -> &mut SeatState<FerriteState<BackendData>> {
         &mut self.seat_state
     }
 
@@ -161,42 +161,42 @@ impl<BackendData: Backend> SeatHandler for MagmaState<BackendData> {
     }
 }
 
-delegate_seat!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_seat!(@<BackendData: Backend + 'static> FerriteState<BackendData>);
 
 //
 // Wl Data Device
 //
 
-impl<BackendData: Backend> SelectionHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> SelectionHandler for FerriteState<BackendData> {
     type SelectionUserData = ();
 }
 
-impl<BackendData: Backend> DataDeviceHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> DataDeviceHandler for FerriteState<BackendData> {
     fn data_device_state(&self) -> &DataDeviceState {
         &self.data_device_state
     }
 }
 
-impl<BackendData: Backend> ClientDndGrabHandler for MagmaState<BackendData> {}
-impl<BackendData: Backend> ServerDndGrabHandler for MagmaState<BackendData> {}
+impl<BackendData: Backend> ClientDndGrabHandler for FerriteState<BackendData> {}
+impl<BackendData: Backend> ServerDndGrabHandler for FerriteState<BackendData> {}
 
-delegate_data_device!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_data_device!(@<BackendData: Backend + 'static> FerriteState<BackendData>);
 
-impl<BackendData: Backend> PrimarySelectionHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> PrimarySelectionHandler for FerriteState<BackendData> {
     fn primary_selection_state(&self) -> &PrimarySelectionState {
         &self.primary_selection_state
     }
 }
 
-delegate_primary_selection!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_primary_selection!(@<BackendData: Backend + 'static> FerriteState<BackendData>);
 //
 // Wl Output & Xdg Output
 //
 
-impl<BackendData: Backend> OutputHandler for MagmaState<BackendData> {}
-delegate_output!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+impl<BackendData: Backend> OutputHandler for FerriteState<BackendData> {}
+delegate_output!(@<BackendData: Backend + 'static> FerriteState<BackendData>);
 
-impl<BackendData: Backend> WlrLayerShellHandler for MagmaState<BackendData> {
+impl<BackendData: Backend> WlrLayerShellHandler for FerriteState<BackendData> {
     fn shell_state(&mut self) -> &mut WlrLayerShellState {
         &mut self.layer_shell_state
     }
@@ -240,4 +240,4 @@ impl<BackendData: Backend> WlrLayerShellHandler for MagmaState<BackendData> {
     }
 }
 
-delegate_layer_shell!(@<BackendData: Backend + 'static> MagmaState<BackendData>);
+delegate_layer_shell!(@<BackendData: Backend + 'static> FerriteState<BackendData>);

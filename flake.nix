@@ -27,7 +27,7 @@
           version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.version;
         in
         {
-          magmawm = final.callPackage ./magmawm.nix {
+          ferrite = final.callPackage ./ferrite.nix {
             inherit (final) lib;
             inherit rust-toolchain version;
             pkgs = final;
@@ -35,8 +35,8 @@
         };
 
       packages = forAllSystems (system: {
-        inherit (pkgsForSystem system) magmawm;
-        default = self.packages.${system}.magmawm;
+        inherit (pkgsForSystem system) ferrite;
+        default = self.packages.${system}.ferrite;
       });
 
       devShells = forAllSystems (system:
@@ -45,12 +45,12 @@
         in
         {
           default = pkgs.mkShell {
-            name = "magmawm";
+            name = "ferrite";
             NIX_CONFIG = "experimental-features = nix-command flakes";
             # Force linking to libEGL and libwayland-client
             RUSTFLAGS = "-lEGL -lwayland-client";
             LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${pkgs.libglvnd}/lib";
-            inputsFrom = [ self.packages.${system}.magmawm ];
+            inputsFrom = [ self.packages.${system}.ferrite ];
             nativeBuildInputs = [
               pkgs.rust-bin."${rust-toolchain}".latest.default
             ];

@@ -32,9 +32,9 @@ struct Args {
 
 #[derive(Debug, Clone, ValueEnum)]
 enum Backend {
-    /// Run Magma as an X11 or Wayland client using winit
+    /// Run Ferrite as an X11 or Wayland client using winit
     Winit,
-    /// Run Magma as a tty udev client (requires root if without logind)
+    /// Run Ferrite as a tty udev client (requires root if without logind)
     TtyUdev,
     /// Automatically select a backend
     Auto,
@@ -83,15 +83,15 @@ fn main() {
 
     match args.backend {
         Backend::Winit => {
-            info!("Starting magmawn with winit backend");
+            info!("Starting ferritewn with winit backend");
             winit::init_winit();
         }
         Backend::TtyUdev => {
-            info!("Starting magma on a tty using udev");
+            info!("Starting ferrite on a tty using udev");
             udev::init_udev();
         }
         Backend::Auto => backends::init_backend_auto(),
     }
 
-    info!("Magma is shutting down");
+    info!("Ferrite is shutting down");
 }

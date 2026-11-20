@@ -40,7 +40,7 @@ pub struct WinitData {
     dmabuf_state: (DmabufState, DmabufGlobal, Option<DmabufFeedback>),
 }
 
-impl DmabufHandler for MagmaState<WinitData> {
+impl DmabufHandler for FerriteState<WinitData> {
     fn dmabuf_state(&mut self) -> &mut DmabufState {
         &mut self.backend_data.dmabuf_state.0
     }
@@ -58,13 +58,13 @@ impl DmabufHandler for MagmaState<WinitData> {
             .import_dmabuf(&dmabuf, None)
             .is_ok()
         {
-            let _ = notifier.successful::<MagmaState<WinitData>>();
+            let _ = notifier.successful::<FerriteState<WinitData>>();
         } else {
             notifier.failed();
         }
     }
 }
-delegate_dmabuf!(MagmaState<WinitData>);
+delegate_dmabuf!(FerriteState<WinitData>);
 
 impl Backend for WinitData {
     fn seat_name(&self) -> String {
@@ -72,14 +72,14 @@ impl Backend for WinitData {
     }
 }
 use crate::{
-    state::{Backend, MagmaState, CONFIG},
+    state::{Backend, FerriteState, CONFIG},
     utils::render::{border::BorderShader, init_shaders, CustomRenderElements},
 };
 
 pub fn init_winit() {
-    let mut event_loop: EventLoop<MagmaState<WinitData>> = EventLoop::try_new().unwrap();
+    let mut event_loop: EventLoop<FerriteState<WinitData>> = EventLoop::try_new().unwrap();
 
-    let display: Display<MagmaState<WinitData>> = Display::new().unwrap();
+    let display: Display<FerriteState<WinitData>> = Display::new().unwrap();
 
     let (mut backend, mut winit) = winit::init::<GlowRenderer>().unwrap();
 
@@ -93,11 +93,11 @@ pub fn init_winit() {
         PhysicalProperties {
             size: (0, 0).into(),
             subpixel: Subpixel::Unknown,
-            make: "MagmaWM".into(),
+            make: "Ferrite".into(),
             model: "Winit".into(),
         },
     );
-    let _global = output.create_global::<MagmaState<WinitData>>(&display.handle());
+    let _global = output.create_global::<FerriteState<WinitData>>(&display.handle());
     output.change_current_state(
         Some(mode),
         Some(Transform::Flipped180),
@@ -134,7 +134,7 @@ pub fn init_winit() {
     let dmabuf_state = if let Some(default_feedback) = dmabuf_default_feedback {
         let mut dmabuf_state = DmabufState::new();
         let dmabuf_global = dmabuf_state
-            .create_global_with_default_feedback::<MagmaState<WinitData>>(
+            .create_global_with_default_feedback::<FerriteState<WinitData>>(
                 &display.handle(),
                 &default_feedback,
             );
@@ -142,8 +142,8 @@ pub fn init_winit() {
     } else {
         let dmabuf_formats = backend.renderer().dmabuf_formats().collect::<Vec<_>>();
         let mut dmabuf_state = DmabufState::new();
-        let dmabuf_global =
-            dmabuf_state.create_global::<MagmaState<WinitData>>(&display.handle(), dmabuf_formats);
+        let dmabuf_global = dmabuf_state
+            .create_global::<FerriteState<WinitData>>(&display.handle(), dmabuf_formats);
         (dmabuf_state, dmabuf_global, None)
     };
 
@@ -160,7 +160,7 @@ pub fn init_winit() {
         damage_tracker: damage_tracked_renderer,
         dmabuf_state,
     };
-    let mut state = MagmaState::new(
+    let mut state = FerriteState::new(
         event_loop.handle(),
         event_loop.get_signal(),
         display,
@@ -196,14 +196,14 @@ pub fn init_winit() {
 
     event_loop
         .run(None, &mut state, move |_| {
-            // Magma is running
+            // Ferrite is running
         })
         .unwrap();
 }
 
 pub fn winit_dispatch(
     winit: &mut WinitEventLoop,
-    state: &mut MagmaState<WinitData>,
+    state: &mut FerriteState<WinitData>,
     output: &Output,
     full_redraw: &mut u8,
 ) {

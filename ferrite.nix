@@ -6,7 +6,7 @@
 
 pkgs.rustPlatform.buildRustPackage {
   inherit version;
-  pname = "magmawm";
+  pname = "ferrite";
   src = lib.cleanSource ./.;
 
   buildInputs = with pkgs; [
@@ -40,13 +40,13 @@ pkgs.rustPlatform.buildRustPackage {
   };
 
   postInstall = ''
-    wrapProgram $out/bin/magmawm --prefix LD_LIBRARY_PATH : "${pkgs.libglvnd}/lib"
+    wrapProgram $out/bin/ferrite --prefix LD_LIBRARY_PATH : "${pkgs.libglvnd}/lib"
   '';
 
   meta = {
     description = "A versatile and customizable Window Manager and Wayland Compositor";
-    homepage = "https://magmawm.org/";
+    homepage = "https://ferrite.org/";
     license = lib.licenses.mit;
-    mainProgram = "magmawm";
+    mainProgram = "ferrite";
   };
 }

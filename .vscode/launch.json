@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'magmawm'",
+            "name": "Debug executable 'ferrite'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=magmawm",
-                    "--package=magmawm"
+                    "--bin=ferrite",
+                    "--package=ferrite"
                 ],
                 "filter": {
-                    "name": "magmawm",
+                    "name": "ferrite",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'magmawm'",
+            "name": "Debug unit tests in executable 'ferrite'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=magmawm",
-                    "--package=magmawm"
+                    "--bin=ferrite",
+                    "--package=ferrite"
                 ],
                 "filter": {
-                    "name": "magmawm",
+                    "name": "ferrite",
                     "kind": "bin"
                 }
             },

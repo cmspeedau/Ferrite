@@ -31,7 +31,7 @@ use crate::utils::{focus::FocusTarget, workspace::Workspaces};
 use crate::xwayland::XWaylandState;
 use crate::{
     config::{load_config, Config},
-    debug::MagmaDebug,
+    debug::FerriteDebug,
 };
 
 pub trait Backend {
@@ -40,7 +40,7 @@ pub trait Backend {
 
 pub static CONFIG: Lazy<Config> = Lazy::new(load_config);
 
-pub struct MagmaState<BackendData: Backend + 'static> {
+pub struct FerriteState<BackendData: Backend + 'static> {
     pub dh: DisplayHandle,
     pub backend_data: BackendData,
     pub start_time: Instant,
@@ -55,7 +55,7 @@ pub struct MagmaState<BackendData: Backend + 'static> {
     pub output_manager_state: OutputManagerState,
     pub data_device_state: DataDeviceState,
     pub primary_selection_state: PrimarySelectionState,
-    pub seat_state: SeatState<MagmaState<BackendData>>,
+    pub seat_state: SeatState<FerriteState<BackendData>>,
     pub layer_shell_state: WlrLayerShellState,
     pub popup_manager: PopupManager,
     #[cfg(feature = "xwayland")]
@@ -69,14 +69,14 @@ pub struct MagmaState<BackendData: Backend + 'static> {
     pub pointer_location: Point<f64, Logical>,
 
     #[cfg(feature = "debug")]
-    pub debug: MagmaDebug,
+    pub debug: FerriteDebug,
 }
 
-impl<BackendData: Backend + 'static> MagmaState<BackendData> {
+impl<BackendData: Backend + 'static> FerriteState<BackendData> {
     pub fn new(
         loop_handle: LoopHandle<'static, Self>,
         loop_signal: LoopSignal,
-        display: Display<MagmaState<BackendData>>,
+        display: Display<FerriteState<BackendData>>,
         backend_data: BackendData,
     ) -> Self {
         let start_time = Instant::now();
@@ -173,7 +173,7 @@ impl<BackendData: Backend + 'static> MagmaState<BackendData> {
             workspaces,
             pointer_location: Point::from((0.0, 0.0)),
             #[cfg(feature = "debug")]
-            debug: MagmaDebug {
+            debug: FerriteDebug {
                 egui: smithay_egui::EguiState::new(Rectangle::from_loc_and_size(
                     (0, 0),
                     (800, 600),
