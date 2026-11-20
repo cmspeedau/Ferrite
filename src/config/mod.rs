@@ -36,6 +36,12 @@ pub struct Config {
 
     #[serde(default = "default_borders")]
     pub borders: Borders,
+
+    #[serde(default = "default_blur")]
+    pub blur: bool,
+
+    #[serde(default = "default_blur_radius")]
+    pub blur_radius: f32,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -124,6 +130,8 @@ pub fn generate_config() -> PathBuf {
         autostart: default_autostart(),
         outputs: default_outputs(),
         borders: default_borders(),
+        blur: default_blur(),
+        blur_radius: default_blur_radius(),
     };
     let pretty = PrettyConfig::new().compact_arrays(true).depth_limit(2);
     let ron = ron::ser::to_string_pretty(&default_config, pretty).unwrap();
@@ -185,6 +193,14 @@ fn default_borders() -> Borders {
         radius: 8.0,
         gradient_angle: 0.0,
     }
+}
+
+fn default_blur() -> bool {
+    false
+}
+
+fn default_blur_radius() -> f32 {
+    8.0
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

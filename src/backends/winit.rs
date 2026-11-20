@@ -298,13 +298,28 @@ pub fn winit_dispatch(
                     .map(|geo| (geo.loc, surface))
             })
             .flat_map(|(loc, surface)| {
-                AsRenderElements::<GlowRenderer>::render_elements::<CustomRenderElements<_>>(
+                let elems = AsRenderElements::<GlowRenderer>::render_elements::<
+                    smithay::backend::renderer::element::surface::WaylandSurfaceRenderElement<
+                        GlowRenderer,
+                    >,
+                >(
                     surface,
                     winitdata.backend.renderer(),
                     loc.to_physical_precise_round(1),
                     Scale::from(1.0),
                     1.0,
-                )
+                );
+                if CONFIG.blur {
+                    elems
+                        .into_iter()
+                        .map(CustomRenderElements::BlurredSurface)
+                        .collect::<Vec<_>>()
+                } else {
+                    elems
+                        .into_iter()
+                        .map(CustomRenderElements::Surface)
+                        .collect::<Vec<_>>()
+                }
             }),
     );
     #[cfg(feature = "debug")]

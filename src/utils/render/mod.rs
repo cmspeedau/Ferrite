@@ -20,7 +20,8 @@ use smithay::{
 
 use crate::state::CONFIG;
 
-use self::{border::BorderShader, corners::CornerShader};
+use self::{blur::BlurShader, border::BorderShader, corners::CornerShader};
+pub mod blur;
 pub mod border;
 pub mod corners;
 
@@ -43,6 +44,7 @@ where
 {
     Texture(TextureRenderElement<GlesTexture>),
     Surface(WaylandSurfaceRenderElement<R>),
+    BlurredSurface(WaylandSurfaceRenderElement<R>),
     Shader(PixelShaderElement),
     Window(WindowRenderElement<R>),
 }
@@ -57,6 +59,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.id(),
             CustomRenderElements::Surface(elem) => elem.id(),
+            CustomRenderElements::BlurredSurface(elem) => elem.id(),
             CustomRenderElements::Shader(elem) => elem.id(),
             CustomRenderElements::Window(elem) => elem.id(),
         }
@@ -66,6 +69,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.current_commit(),
             CustomRenderElements::Surface(elem) => elem.current_commit(),
+            CustomRenderElements::BlurredSurface(elem) => elem.current_commit(),
             CustomRenderElements::Shader(elem) => elem.current_commit(),
             CustomRenderElements::Window(elem) => elem.current_commit(),
         }
@@ -75,6 +79,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.src(),
             CustomRenderElements::Surface(elem) => elem.src(),
+            CustomRenderElements::BlurredSurface(elem) => elem.src(),
             CustomRenderElements::Shader(elem) => elem.src(),
             CustomRenderElements::Window(elem) => elem.src(),
         }
@@ -84,6 +89,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.geometry(scale),
             CustomRenderElements::Surface(elem) => elem.geometry(scale),
+            CustomRenderElements::BlurredSurface(elem) => elem.geometry(scale),
             CustomRenderElements::Shader(elem) => elem.geometry(scale),
             CustomRenderElements::Window(elem) => elem.geometry(scale),
         }
@@ -93,6 +99,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.location(scale),
             CustomRenderElements::Surface(elem) => elem.location(scale),
+            CustomRenderElements::BlurredSurface(elem) => elem.location(scale),
             CustomRenderElements::Shader(elem) => elem.location(scale),
             CustomRenderElements::Window(elem) => elem.location(scale),
         }
@@ -102,6 +109,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.transform(),
             CustomRenderElements::Surface(elem) => elem.transform(),
+            CustomRenderElements::BlurredSurface(elem) => elem.transform(),
             CustomRenderElements::Shader(elem) => elem.transform(),
             CustomRenderElements::Window(elem) => elem.transform(),
         }
@@ -115,6 +123,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.damage_since(scale, commit),
             CustomRenderElements::Surface(elem) => elem.damage_since(scale, commit),
+            CustomRenderElements::BlurredSurface(elem) => elem.damage_since(scale, commit),
             CustomRenderElements::Shader(elem) => elem.damage_since(scale, commit),
             CustomRenderElements::Window(elem) => elem.damage_since(scale, commit),
         }
@@ -124,6 +133,7 @@ where
         match self {
             CustomRenderElements::Texture(elem) => elem.opaque_regions(scale),
             CustomRenderElements::Surface(elem) => elem.opaque_regions(scale),
+            CustomRenderElements::BlurredSurface(elem) => elem.opaque_regions(scale),
             CustomRenderElements::Shader(elem) => elem.opaque_regions(scale),
             CustomRenderElements::Window(elem) => elem.opaque_regions(scale),
         }
@@ -144,6 +154,7 @@ impl<'a> RenderElement<GlMultiRenderer<'a>> for CustomRenderElements<GlMultiRend
                     .map_err(MultiError::Render)
             }
             CustomRenderElements::Surface(elem) => elem.draw(frame, src, dst, damage),
+            CustomRenderElements::BlurredSurface(elem) => elem.draw(frame, src, dst, damage),
             CustomRenderElements::Shader(elem) => {
                 RenderElement::<GlowRenderer>::draw(elem, frame.as_mut(), src, dst, damage)
                     .map_err(MultiError::Render)
@@ -159,6 +170,7 @@ impl<'a> RenderElement<GlMultiRenderer<'a>> for CustomRenderElements<GlMultiRend
         match self {
             CustomRenderElements::Texture(elem) => elem.underlying_storage(renderer.as_mut()),
             CustomRenderElements::Surface(elem) => elem.underlying_storage(renderer),
+            CustomRenderElements::BlurredSurface(elem) => elem.underlying_storage(renderer),
             CustomRenderElements::Shader(elem) => elem.underlying_storage(renderer.as_mut()),
             CustomRenderElements::Window(elem) => elem.underlying_storage(renderer),
         }
@@ -178,6 +190,28 @@ impl RenderElement<GlowRenderer> for CustomRenderElements<GlowRenderer> {
                 RenderElement::<GlowRenderer>::draw(elem, frame, src, dst, damage)
             }
             CustomRenderElements::Surface(elem) => elem.draw(frame, src, dst, damage),
+            CustomRenderElements::BlurredSurface(elem) => {
+                if CONFIG.blur && CONFIG.blur_radius > 0.0 {
+                    let size = elem
+                        .geometry(Scale::from(1.0))
+                        .size
+                        .to_logical(Scale::from(1));
+                    let framegl = <GlowFrame<'_> as BorrowMut<GlesFrame>>::borrow_mut(frame);
+                    framegl.override_default_tex_program(
+                        BlurShader::get(framegl.egl_context()),
+                        vec![
+                            Uniform::new("size", [size.w as f32, size.h as f32]),
+                            Uniform::new("radius", CONFIG.blur_radius),
+                        ],
+                    );
+                    let result = elem.draw(frame, src, dst, damage);
+                    <GlowFrame<'_> as BorrowMut<GlesFrame>>::borrow_mut(frame)
+                        .clear_tex_program_override();
+                    result
+                } else {
+                    elem.draw(frame, src, dst, damage)
+                }
+            }
             CustomRenderElements::Shader(elem) => {
                 RenderElement::<GlowRenderer>::draw(elem, frame, src, dst, damage)
             }
@@ -418,4 +452,5 @@ where
 pub fn init_shaders(renderer: &mut GlowRenderer) {
     BorderShader::init(renderer);
     CornerShader::init(renderer);
+    BlurShader::init(renderer);
 }

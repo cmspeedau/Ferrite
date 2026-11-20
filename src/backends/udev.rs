@@ -762,10 +762,15 @@ impl MagmaState<UdevData> {
                         1.0,
                     )
                     .into_iter()
-                    .map(CustomRenderElements::Surface)
+                    .map(|e| {
+                        if CONFIG.blur {
+                            CustomRenderElements::BlurredSurface(e)
+                        } else {
+                            CustomRenderElements::Surface(e)
+                        }
+                    })
                 }),
         );
-        #[cfg(feature = "debug")]
         self.debug.fps.elements();
 
         let frame_result: Result<RenderFrameResult<_, _, _>, SwapBuffersError> = surface
