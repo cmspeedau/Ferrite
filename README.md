@@ -26,7 +26,7 @@ Join our [Discord](https://discord.gg/VM8DkxaHfa)!
 - [x] Dynamic Tiling and Floating Windows
 - [x] Keyboard and Monitor Managament
 - [x] [Screencopy](https://wayland.app/protocols/wlr-screencopy-unstable-v1) Protocols for Screensharing/Screenshots
-- [ ] Blur
+- [x] Blur
 - [ ] Animations
 - [X] Borders
 - [x] Can display wayland applications
