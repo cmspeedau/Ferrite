@@ -14,6 +14,19 @@ Status: **Not implemented.** Research note; tracked as a roadmap item in `README
   not currently request or use it for tone mapping.
 - DRM side uses `DrmCompositor` with `GbmAllocator`; no HDR metadata is set.
 
+## Upstream status (Smithay PR #1143)
+
+Still a **draft** as of Nov 2026, despite the protocols (`wp-color-management-v1`) now being
+released/stable. The maintainer (Drakulix) states the protocol side is the easy part; the
+rendering-pipeline (color-space-aware blending, tone mapping, CTM/gamma LUTs) has not been
+started, and the PR itself is untested. A community fork
+([dividebysandwich/smithay `ds-hdr-master`](https://github.com/dividebysandwich/smithay/tree/ds-hdr-master))
+has working windowed/fullscreen HDR passthrough on NVIDIA and AMD, built on this PR's foundations.
+
+Conclusion: HDR is blocked on upstream Smithay. Ferrite cannot implement it independently without
+forking Smithay and carrying the color-management pipeline ourselves. Track this PR and the
+community fork; revisit when Smithay merges color management.
+
 ## What full HDR requires
 
 1. **DRM output**: set `DRM_CONNECTOR_HDR_OUTPUT_METADATA` on the connector,
