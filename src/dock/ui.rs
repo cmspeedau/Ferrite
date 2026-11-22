@@ -40,6 +40,42 @@ pub(crate) fn draw(ctx: &Context, dock: &mut DockUi, running: &[String]) {
     // Deferred `.desktop` scan; the frame before this one drew the loading state.
     dock.run_scan();
 
+    // Running applications that are not pinned get a temporary tile, like the unpinned running
+    // apps on a macOS dock. Resolved against the (already scanned) application list so the tile
+    // can show the real icon and, on right-click, be pinned.
+    let mut transient: Vec<String> = Vec::new();
+    match dock.apps_state() {
+        Some(Ok(apps)) => {
+            for rid in running {
+                let pinned = dock.pins().iter().any(|pid| {
+                    apps.iter()
+                        .find(|a| a.id == *pid)
+                        .map(|e| e.matches_app_id(rid))
+                        .unwrap_or_else(|| pid == rid)
+                });
+                if pinned {
+                    continue;
+                }
+                let desktop_id = apps
+                    .iter()
+                    .find(|a| a.matches_app_id(rid))
+                    .map(|a| a.id.clone())
+                    .unwrap_or_else(|| rid.to_string());
+                if !transient.contains(&desktop_id) {
+                    transient.push(desktop_id);
+                }
+            }
+        }
+        _ => {
+            for rid in running {
+                if !dock.pins().contains(rid) && !transient.contains(rid) {
+                    transient.push(rid.to_string());
+                }
+            }
+        }
+    }
+    dock.set_transient(transient);
+
     let (screen, pointer) = ctx.input(|i| (i.screen_rect(), i.pointer.interact_pos()));
 
     let layout = compute_layout(dock, screen);
@@ -59,18 +95,20 @@ pub(crate) fn draw(ctx: &Context, dock: &mut DockUi, running: &[String]) {
 fn compute_layout(dock: &DockUi, screen: Rect) -> Layout {
     let slot = dock.slot_size();
     let pins = dock.pins().len();
-    // With nothing pinned the panel keeps one labelled empty slot, so the bar does not collapse
+    let trans = dock.transient().len();
+    let total = pins + trans;
+    // With nothing on the bar the panel keeps one labelled empty slot, so it does not collapse
     // to a single button the user cannot read anything from.
-    let empty_w = if pins == 0 { slot + TILE_GAP } else { 0.0 };
-    let width = PANEL_PAD * 2.0 + pins as f32 * slot + empty_w + DIVIDER_W + slot + TILE_GAP * 0.0;
+    let empty_w = if total == 0 { slot + TILE_GAP } else { 0.0 };
+    let width = PANEL_PAD * 2.0 + total as f32 * slot + empty_w + DIVIDER_W + slot + TILE_GAP * 0.0;
     let height = dock.panel_height();
     let left = (screen.center().x - width * 0.5).max(screen.left() + EDGE_MARGIN);
     let top = screen.bottom() - EDGE_MARGIN - height;
     let panel = Rect::from_min_size(Pos2::new(left, top), vec2(width, height));
 
-    let mut slots = Vec::with_capacity(pins);
+    let mut slots = Vec::with_capacity(pins + trans);
     let mut x = panel.left() + PANEL_PAD + empty_w;
-    for _ in 0..pins {
+    for _ in 0..(pins + trans) {
         slots.push(Rect::from_min_size(
             Pos2::new(x, panel.top()),
             vec2(slot, height),
@@ -327,7 +365,18 @@ fn draw_dock(
                 Stroke::new(1.0_f32, Color32::from_white_alpha(28)),
             );
 
-            // Divider between the pinned applications and the launcher.
+            if !dock.pins().is_empty() && !dock.transient().is_empty() {
+                let x = layout.slots[dock.pins().len() - 1].right() + TILE_GAP * 0.5;
+                ui.painter().line_segment(
+                    [
+                        Pos2::new(x, layout.panel.top() + PANEL_PAD),
+                        Pos2::new(x, layout.panel.bottom() - PANEL_PAD),
+                    ],
+                    Stroke::new(1.0_f32, HAIRLINE),
+                );
+            }
+
+            // Divider between the applications and the launcher.
             let divider_x = layout.launcher.left() - DIVIDER_W * 0.5;
             ui.painter().line_segment(
                 [
@@ -337,7 +386,7 @@ fn draw_dock(
                 Stroke::new(1.0_f32, HAIRLINE),
             );
 
-            if dock.pins().is_empty() {
+            if dock.tile_count() == 0 {
                 empty_slot(ui, dock, layout);
             }
 
@@ -402,23 +451,70 @@ fn dock_slot(
     let scale = dock.magnification(slot.center().x, pointer);
     let size = dock.icon_size() * scale;
     let floor = layout.panel.bottom() - PANEL_PAD - INDICATOR_H;
-    // Icons sit on the floor of the panel and grow upwards, as on macOS. Centring them would lift
-    // the row off the bar while a neighbour is hovered.
     let icon = Rect::from_min_max(
         Pos2::new(slot.center().x - size * 0.5, floor - size),
         Pos2::new(slot.center().x + size * 0.5, floor),
     );
 
-    let Some(app) = dock.pin_at_index(index).cloned() else {
+    let pinned = dock.tile_pinned(index);
+    let app = if pinned {
+        dock.pin_at_index(index).cloned()
+    } else {
+        dock.tile_id(index).and_then(|id| dock.entry(&id).cloned())
+    };
+
+    // A running application with no .desktop entry still gets a tile, so the user can raise it;
+    // it cannot be pinned because there is no stable id to store.
+    let Some(app) = app else {
+        let id = dock.tile_id(index).unwrap_or_default();
+        let response = ui.interact(slot, dock_id().with(index), Sense::click());
+        if response.hovered() && dock.drag().is_none() {
+            ui.painter()
+                .rect_filled(slot, Rounding::same(TILE_RADIUS), HOVER_BG);
+        }
+        let letter = id.chars().next().unwrap_or('?').to_uppercase().to_string();
+        ui.painter()
+            .rect_filled(icon, Rounding::same(TILE_RADIUS), SURFACE_HI);
+        ui.painter().rect_stroke(
+            icon,
+            Rounding::same(TILE_RADIUS),
+            Stroke::new(1.0_f32, HAIRLINE),
+        );
+        ui.painter().text(
+            icon.center(),
+            Align2::CENTER_CENTER,
+            letter,
+            FontId::proportional(icon.height() * 0.45),
+            TEXT,
+        );
+        ui.painter().circle_filled(
+            Pos2::new(slot.center().x, layout.panel.bottom() - INDICATOR_H * 0.5),
+            3.0,
+            ACCENT,
+        );
+        if response.clicked() {
+            dock.push_request(DockRequest::Activate(id.clone()));
+        }
+        response.context_menu(|ui| {
+            // Nothing to pin without a desktop entry.
+            let _ = ui;
+        });
         return;
     };
-    let response = ui.interact(slot, dock_id().with(index), Sense::click_and_drag());
+
+    let sense = if pinned {
+        Sense::click_and_drag()
+    } else {
+        Sense::click()
+    };
+    let response = ui.interact(slot, dock_id().with(index), sense);
     if response.hovered() && dock.drag().is_none() {
         ui.painter()
             .rect_filled(slot, Rounding::same(TILE_RADIUS), HOVER_BG);
     }
     icon_or_placeholder(ui, dock, &app, icon);
 
+    // Every running application carries the indicator, pinned or not.
     if crate::dock::is_running(&app, running) {
         ui.painter().circle_filled(
             Pos2::new(slot.center().x, layout.panel.bottom() - INDICATOR_H * 0.5),
@@ -430,9 +526,22 @@ fn dock_slot(
     if response.clicked() {
         dock.push_request(DockRequest::Activate(app.id.clone()));
     }
-    if response.drag_started() {
+    if pinned && response.drag_started() {
         dock.set_drag(Some(Drag::Dock(index)));
     }
+
+    let app_id = app.id.clone();
+    response.context_menu(|ui| {
+        if pinned {
+            if ui.button("Unpin").clicked() {
+                dock.unpin(index);
+                ui.close_menu();
+            }
+        } else if ui.button("Pin to Dock").clicked() {
+            dock.toggle_pin(&app_id);
+            ui.close_menu();
+        }
+    });
 }
 
 /// The launcher: the mockup's orange hexagon with a Launchpad-style 3x3 of dots, which reads as

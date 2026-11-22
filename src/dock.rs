@@ -116,6 +116,9 @@ pub struct DockUi {
     egui: EguiState,
     /// Desktop entry ids, in dock order.
     pins: Vec<String>,
+    /// Running applications that are not pinned: they get a temporary tile that vanishes when
+    /// the application closes, like the running (unpinned) apps on a macOS dock.
+    transient: Vec<String>,
     pins_path: PathBuf,
     /// `None` until the scan has run: reading every `.desktop` entry costs a few hundred file
     /// reads, so it happens one frame after the compositor starts instead of on the hot path.
@@ -170,6 +173,7 @@ impl DockUi {
         Self {
             egui,
             pins,
+            transient: Vec::new(),
             pins_path,
             apps: None,
             scan_pending: true,
@@ -410,6 +414,32 @@ impl DockUi {
 
     pub(crate) fn pins(&self) -> &[String] {
         &self.pins
+    }
+
+    /// Total tiles on the bar: pinned first, then the running applications that are not pinned.
+    pub(crate) fn tile_count(&self) -> usize {
+        self.pins.len() + self.transient.len()
+    }
+
+    /// Desktop entry id (or app id) held by tile `index`.
+    pub(crate) fn tile_id(&self, index: usize) -> Option<String> {
+        if index < self.pins.len() {
+            self.pins.get(index).cloned()
+        } else {
+            self.transient.get(index - self.pins.len()).cloned()
+        }
+    }
+
+    pub(crate) fn tile_pinned(&self, index: usize) -> bool {
+        index < self.pins.len()
+    }
+
+    pub(crate) fn set_transient(&mut self, transient: Vec<String>) {
+        self.transient = transient;
+    }
+
+    pub(crate) fn transient(&self) -> &[String] {
+        &self.transient
     }
 
     pub(crate) fn set_visible(&mut self, visible: Vec<usize>, columns: usize) {
@@ -713,6 +743,7 @@ mod tests {
         let mut dock = DockUi {
             egui: EguiState::new(Rectangle::from_loc_and_size((0, 0), (1, 1))),
             pins: pins.into_iter().map(|s| s.to_string()).collect(),
+            transient: Vec::new(),
             pins_path: path,
             apps: Some(Ok(apps)),
             scan_pending: false,
@@ -987,4 +1018,21 @@ mod tests {
         ));
         assert!(!crate::apps::AppEntry::matches_app_id(&entry, "konsole"));
     }
+    #[test]
+    fn running_apps_appear_as_transient_tiles() {
+        let mut dock = make_dock(vec![test_app("firefox.desktop", "Firefox")], vec![]);
+        assert_eq!(dock.tile_count(), 0);
+        run_frame(&mut dock, &["firefox".to_string()], vec![]);
+        assert_eq!(dock.tile_count(), 1, "a running unpinned app should get a tile");
+        assert!(!dock.tile_pinned(0), "the running tile must not be pinned");
+        assert!(crate::dock::is_running(dock.tile_id(0).as_ref().and_then(|id| dock.entry(id)).unwrap(), &["firefox".to_string()]));
+    }
+
+    #[test]
+    fn running_pinned_app_does_not_duplicate() {
+        let mut dock = make_dock(vec![test_app("firefox.desktop", "Firefox")], vec!["firefox.desktop"]);
+        run_frame(&mut dock, &["firefox".to_string()], vec![]);
+        assert_eq!(dock.tile_count(), 1, "pinned + running must not duplicate");
+    }
+
 }
