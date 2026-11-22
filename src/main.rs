@@ -9,10 +9,12 @@ use crate::{
     utils::log::init_logs,
 };
 
+mod apps;
 mod backends;
 mod config;
 #[cfg(feature = "debug")]
 mod debug;
+mod dock;
 mod handlers;
 mod protocols;
 mod state;

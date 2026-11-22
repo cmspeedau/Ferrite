@@ -10,9 +10,10 @@ use smithay::{
         gles::element::PixelShaderElement,
         ImportAll, Renderer, Texture,
     },
-    desktop::{space::SpaceElement, Window},
+    desktop::{space::SpaceElement, Window, WindowSurface},
     output::Output,
     utils::{Logical, Point, Rectangle, Scale, Transform},
+    wayland::{compositor::with_states, shell::xdg::XdgToplevelSurfaceData},
 };
 
 use crate::state::CONFIG;
@@ -22,6 +23,26 @@ use super::{
     render::{border::BorderShader, wrap_window_surface, AsGlowRenderer, WindowRenderElement},
     tiling::bsp_update_layout,
 };
+
+/// The identifier a window reports for the application it belongs to.
+///
+/// Wayland toplevels set an app id (`org.mozilla.firefox`), X11 windows only have a WM class
+/// (`Firefox`), and both are compared case-insensitively against the desktop entries by
+/// [`crate::apps::AppEntry::matches_app_id`].
+pub fn app_id(window: &Window) -> Option<String> {
+    match window.underlying_surface() {
+        WindowSurface::Wayland(toplevel) => with_states(toplevel.wl_surface(), |states| {
+            states
+                .data_map
+                .get::<XdgToplevelSurfaceData>()
+                .and_then(|data| data.lock().unwrap().app_id.clone())
+        }),
+        WindowSurface::X11(surface) => {
+            let class = surface.class();
+            (!class.is_empty()).then_some(class)
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FerriteWindow {
@@ -65,6 +86,14 @@ impl Workspace {
         self.windows
             .iter()
             .map(|w| Ref::map(w.borrow(), |hw| &hw.window))
+    }
+
+    /// Identifiers of the applications that have a window open here, used for the dock's running
+    /// indicators.
+    pub fn app_ids(&self) -> Vec<String> {
+        self.windows()
+            .filter_map(|window| app_id(&window))
+            .collect()
     }
 
     pub fn ferritewindows(&self) -> impl Iterator<Item = Ref<'_, FerriteWindow>> {
@@ -351,6 +380,14 @@ impl Workspaces {
         self.workspaces
             .iter_mut()
             .find(|w| w.contains_window(window))
+    }
+
+    /// Index of the workspace holding `window`, so raising a window can switch to it first.
+    pub fn index_of(&self, window: &Window) -> Option<u8> {
+        self.workspaces
+            .iter()
+            .position(|w| w.contains_window(window))
+            .map(|index| index as u8)
     }
 
     pub fn activate(&mut self, id: u8) {

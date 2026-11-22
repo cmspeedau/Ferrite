@@ -26,7 +26,12 @@ use smithay::{
 };
 use tracing::warn;
 
-use crate::utils::{focus::FocusTarget, workspace::Workspaces};
+use crate::dock::{DockRequest, DockUi};
+use crate::utils::{
+    focus::FocusTarget,
+    process,
+    workspace::{app_id, Workspaces},
+};
 #[cfg(feature = "xwayland")]
 use crate::xwayland::XWaylandState;
 use crate::{
@@ -67,6 +72,8 @@ pub struct FerriteState<BackendData: Backend + 'static> {
 
     pub workspaces: Workspaces,
     pub pointer_location: Point<f64, Logical>,
+    /// The dock and its application grid.
+    pub dock: DockUi,
 
     #[cfg(feature = "debug")]
     pub debug: FerriteDebug,
@@ -172,6 +179,7 @@ impl<BackendData: Backend + 'static> FerriteState<BackendData> {
             seat,
             workspaces,
             pointer_location: Point::from((0.0, 0.0)),
+            dock: DockUi::new(),
             #[cfg(feature = "debug")]
             debug: FerriteDebug {
                 egui: smithay_egui::EguiState::new(Rectangle::from_loc_and_size(
@@ -217,6 +225,36 @@ impl<BackendData: Backend + 'static> FerriteState<BackendData> {
             under = Some((layer.clone().into(), output_geo.loc + layer_loc));
         };
         under
+    }
+
+    /// Do what the dock asked for during the last frame: raise the application's window when it
+    /// is open (on any workspace), start it when it is not.
+    pub fn apply_dock_requests(&mut self) {
+        for DockRequest::Activate(id) in self.dock.take_requests() {
+            let Some(app) = self.dock.entry(&id).cloned() else {
+                continue;
+            };
+            let open = self
+                .workspaces
+                .all_windows()
+                .find(|window| {
+                    app_id(window)
+                        .map(|found| app.matches_app_id(&found))
+                        .unwrap_or(false)
+                })
+                .map(|window| window.clone());
+            match open {
+                Some(window) => {
+                    if let Some(index) = self.workspaces.index_of(&window) {
+                        self.workspaces.activate(index);
+                    }
+                    self.set_input_focus(FocusTarget::Window(window));
+                }
+                None => {
+                    process::spawn(&app.exec);
+                }
+            }
+        }
     }
 }
 

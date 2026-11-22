@@ -73,7 +73,7 @@ impl Backend for WinitData {
 }
 use crate::{
     state::{Backend, FerriteState, CONFIG},
-    utils::render::{border::BorderShader, dock::DockShader, init_shaders, CustomRenderElements},
+    utils::render::{border::BorderShader, init_shaders, CustomRenderElements},
 };
 
 pub fn init_winit() {
@@ -224,6 +224,9 @@ pub fn winit_dispatch(
         _ => (),
     });
 
+    // Do what the dock asked for on the previous frame, before the state is borrowed apart.
+    state.apply_dock_requests();
+
     let winitdata = &mut state.backend_data;
 
     if let PumpStatus::Exit(_) = res {
@@ -323,16 +326,25 @@ pub fn winit_dispatch(
                 }
             }),
     );
-    if let Some(dock_geo) = crate::utils::dock::dock_geometry(output) {
-        renderelements.push(CustomRenderElements::Shader(DockShader::element(
-            winitdata.backend.renderer(),
-            dock_geo,
-        )));
-    }
 
     #[cfg(feature = "debug")]
     state.debug.fps.elements();
     winitdata.backend.bind().unwrap();
+    if CONFIG.dock {
+        // Drawn last so the bar and the grid sit above the windows. The context is current from
+        // the bind above: egui renders into its own texture here, before the frame.
+        let running = workspace.app_ids();
+        if let Ok(element) = state.dock.render(
+            winitdata.backend.renderer(),
+            Rectangle::from_loc_and_size((0, 0), size.to_logical(1)),
+            &running,
+        ) {
+            renderelements.push(element.into());
+        }
+        // Rendering the ui binds an off-screen texture and unbinds the surface afterwards, so the
+        // window has to become the current draw surface again before the frame.
+        winitdata.backend.bind().unwrap();
+    }
     winitdata
         .damage_tracker
         .render_output(

@@ -1,5 +1,4 @@
 pub mod binarytree;
-pub mod dock;
 pub mod focus;
 pub mod log;
 pub mod process;

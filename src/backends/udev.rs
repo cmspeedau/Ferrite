@@ -69,10 +69,7 @@ use crate::{
     state::{Backend, FerriteState, CONFIG},
     utils::{
         process,
-        render::{
-            border::BorderShader, dock::DockShader, init_shaders, AsGlowRenderer,
-            CustomRenderElements,
-        },
+        render::{border::BorderShader, init_shaders, AsGlowRenderer, CustomRenderElements},
     },
 };
 
@@ -664,6 +661,8 @@ impl FerriteState<UdevData> {
         crtc: crtc::Handle,
         screencopy: Option<Screencopy>,
     ) -> Result<bool, SwapBuffersError> {
+        // Do what the dock asked for on the previous frame, before anything is borrowed.
+        self.apply_dock_requests();
         #[cfg(feature = "debug")]
         self.debug.fps.start();
         let device = self.backend_data.devices.get_mut(&node).unwrap();
@@ -775,11 +774,20 @@ impl FerriteState<UdevData> {
                     })
                 }),
         );
-        if let Some(dock_geo) = crate::utils::dock::dock_geometry(output) {
-            renderelements.push(CustomRenderElements::Shader(DockShader::element(
+        if CONFIG.dock {
+            // Drawn above the windows and layers: the bar, the grid and the dragged icon all
+            // belong to the compositor, not to a client.
+            let running = self.workspaces.current().app_ids();
+            if let Ok(element) = self.dock.render(
                 renderer.glow_renderer_mut(),
-                dock_geo,
-            )));
+                Rectangle::from_loc_and_size(
+                    (0, 0),
+                    output.current_mode().unwrap().size.to_logical(1),
+                ),
+                &running,
+            ) {
+                renderelements.push(element.into());
+            }
         }
         self.debug.fps.elements();
 

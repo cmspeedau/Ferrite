@@ -106,6 +106,14 @@ pub fn generate_config() -> PathBuf {
     keybinding_map.insert(
         KeyPattern {
             modifiers: KeyModifiersDef(vec![KeyModifier::Super]).into(),
+            key: keysyms::KEY_a.into(),
+        },
+        Action::Launcher,
+    );
+
+    keybinding_map.insert(
+        KeyPattern {
+            modifiers: KeyModifiersDef(vec![KeyModifier::Super]).into(),
             key: keysyms::KEY_w.into(),
         },
         Action::Close,
@@ -283,6 +291,8 @@ pub enum Action {
     MoveWindow(u8),
     MoveAndSwitch(u8),
     ToggleWindowFloating,
+    /// Open the dock's application grid.
+    Launcher,
     VTSwitch(i32),
     Spawn(String),
 }

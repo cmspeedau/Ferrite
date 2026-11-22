@@ -2,8 +2,8 @@ use smithay::{
     backend::{
         input::{
             self, AbsolutePositionEvent, Axis, AxisSource, ButtonState, Event, InputBackend,
-            InputEvent, KeyState, KeyboardKeyEvent, MouseButton, PointerAxisEvent,
-            PointerButtonEvent, PointerMotionEvent,
+            InputEvent, KeyState, KeyboardKeyEvent, PointerAxisEvent, PointerButtonEvent,
+            PointerMotionEvent,
         },
         libinput::LibinputInputBackend,
     },
@@ -20,7 +20,6 @@ use crate::{
     backends::udev::UdevData,
     config::Action,
     state::{Backend, FerriteState, CONFIG},
-    utils::dock,
     utils::focus::FocusTarget,
     utils::process,
 };
@@ -49,6 +48,14 @@ impl FerriteState<UdevData> {
                             leds.insert(Led::NUMLOCK);
                         }
                         event.device().led_update(leds);
+                        if state.dock.wants_keyboard() {
+                            state.dock.handle_keyboard(
+                                &handle,
+                                event.state() == KeyState::Pressed,
+                                *modifiers,
+                            );
+                            return FilterResult::Intercept(None);
+                        }
                         #[cfg(feature = "debug")]
                         if state.debug.egui.wants_keyboard() {
                             state.debug.egui.handle_keyboard(
@@ -121,6 +128,14 @@ impl<BackendData: Backend> FerriteState<BackendData> {
                     serial,
                     time,
                     |state, modifiers, handle| {
+                        if state.dock.wants_keyboard() {
+                            state.dock.handle_keyboard(
+                                &handle,
+                                event.state() == KeyState::Pressed,
+                                *modifiers,
+                            );
+                            return FilterResult::Intercept(None);
+                        }
                         #[cfg(feature = "debug")]
                         if state.debug.egui.wants_keyboard() {
                             state.debug.egui.handle_keyboard(
@@ -178,6 +193,10 @@ impl<BackendData: Backend> FerriteState<BackendData> {
                         },
                     )
                 }
+                // The dock tracks the pointer even when a client also gets the motion: it needs
+                // the position to know when a tile is hovered.
+                self.dock
+                    .handle_pointer_motion(self.pointer_location.to_i32_round());
                 #[cfg(feature = "debug")]
                 self.debug
                     .egui
@@ -209,6 +228,10 @@ impl<BackendData: Backend> FerriteState<BackendData> {
                         time: event.time_msec(),
                     },
                 );
+                // The dock tracks the pointer even when a client also gets the motion: it needs
+                // the position to know when a tile is hovered.
+                self.dock
+                    .handle_pointer_motion(self.pointer_location.to_i32_round());
                 #[cfg(feature = "debug")]
                 self.debug
                     .egui
@@ -233,16 +256,13 @@ impl<BackendData: Backend> FerriteState<BackendData> {
                     }
                     return;
                 }
-                // The dock is compositor-drawn, so its clicks never reach a client.
-                if button_state == ButtonState::Pressed && event.button() == Some(MouseButton::Left)
-                {
-                    let output = self.workspaces.current().outputs().next().cloned();
-                    if let Some(output) = output {
-                        if let Some(index) = dock::slot_at(&output, self.pointer_location) {
-                            dock::launch(index);
-                            return;
-                        }
+                // A dock tile, the grid or a drag owns the click; it never reaches a client.
+                if self.dock.wants_pointer() {
+                    if let Some(button) = event.button() {
+                        self.dock
+                            .handle_pointer_button(button, event.state() == ButtonState::Pressed);
                     }
+                    return;
                 }
                 pointer.button(
                     self,
@@ -255,6 +275,19 @@ impl<BackendData: Backend> FerriteState<BackendData> {
                 );
             }
             InputEvent::PointerAxis { event, .. } => {
+                if self.dock.wants_pointer() {
+                    self.dock.handle_pointer_axis(
+                        event
+                            .amount_v120(Axis::Horizontal)
+                            .or_else(|| event.amount(Axis::Horizontal).map(|x| x * 3.0))
+                            .unwrap_or(0.0),
+                        event
+                            .amount_v120(Axis::Vertical)
+                            .or_else(|| event.amount(Axis::Vertical).map(|x| x * 3.0))
+                            .unwrap_or(0.0),
+                    );
+                    return;
+                }
                 #[cfg(feature = "debug")]
                 if self.debug.egui.wants_pointer() {
                     self.debug.egui.handle_pointer_axis(
@@ -367,6 +400,12 @@ impl<BackendData: Backend> FerriteState<BackendData> {
             Action::MoveAndSwitch(u8) => {
                 self.handle_action(Action::MoveWindow(u8));
                 self.handle_action(Action::Workspace(u8));
+            }
+            Action::Launcher => {
+                // The grid hangs off the dock, so without a dock there is nothing to anchor it to.
+                if CONFIG.dock {
+                    self.dock.toggle_grid();
+                }
             }
             Action::ToggleWindowFloating => {
                 let window = self
